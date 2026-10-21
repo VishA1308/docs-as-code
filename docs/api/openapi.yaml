@@ -10,7 +10,7 @@ servers:
 
 paths:
 
-    /classification_text:
+  /classification:
     post:
       summary: Определение намерения пользователя
       description: Получает текст от пользователя и определяет, что он хочет сделать
@@ -51,9 +51,6 @@ paths:
                       doctorName:
                         type: string
                         example: Иванов Иван Иванович
-                      specialization:
-                        type: string
-                        example: Терапевт
                       dateTime:
                         type: string
                         format: date-time
@@ -87,13 +84,13 @@ paths:
                     type: string
                     example: Внутренняя ошибка сервиса
 
-  /appointments/{id}:
+  /users/{userId}/appointments:
     post:
       summary: Запись к врачу
       description: Создаёт новую запись к врачу для пользователя с указанным id
 
       parameters:
-        - name: id
+        - name: userId
           in: path
           required: true
           description: Идентификатор пользователя
@@ -145,48 +142,13 @@ paths:
               example:
                 code: INTERNAL_ERROR
                 message: Внутренняя ошибка сервиса
-    delete:
-      summary: Удалить запись к врачу
-      description: Удаляет запись к врачу с указанным id
 
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: Идентификатор записи
-          schema:
-            type: integer
-          example: 1
-
-      responses:
-        '204':
-          description: Запись к врачу успешно удалена
-
-        '404':
-          description: Запись не найдена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: APPOINTMENT_NOT_FOUND
-                message: Запись с указанным id не найдена
-
-        '500':
-          description: Внутренняя ошибка сервиса
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: INTERNAL_ERROR
-                message: Внутренняя ошибка сервиса
     get:
       summary: Список всех записей к врачу
       description: Находит все записи к врачу для пользователя с указанным id
 
       parameters:
-        - name: id
+        - name: userId
           in: path
           required: true
           description: Идентификатор пользователя
@@ -223,8 +185,44 @@ paths:
               example:
                 code: INTERNAL_ERROR
                 message: Внутренняя ошибка сервиса
-  
-    
+
+  /appointments/{appointmentId}:
+    delete:
+      summary: Удалить запись к врачу
+      description: Удаляет запись к врачу с указанным id
+
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          description: Идентификатор записи
+          schema:
+            type: integer
+          example: 10
+
+      responses:
+        '204':
+          description: Запись к врачу успешно удалена
+
+        '404':
+          description: Запись не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: APPOINTMENT_NOT_FOUND
+                message: Запись с указанным id не найдена
+
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервиса
 
 components:
   schemas:
@@ -255,9 +253,6 @@ components:
         doctorName:
           type: string
           example: Иванов Иван Иванович
-        specialization:
-          type: string
-          example: Терапевт
         dateTime:
           type: string
           format: date-time
