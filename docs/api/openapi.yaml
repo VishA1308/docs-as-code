@@ -1,0 +1,281 @@
+openapi: 3.0.3
+
+info:
+  title: ИИ-бот для записи к врачу API
+  description: API для работы с ИИ-ботом
+  version: 1.0.0
+
+servers:
+  - url: https://example.com/api/v1
+
+paths:
+
+    /classification_text:
+    post:
+      summary: Определение намерения пользователя
+      description: Получает текст от пользователя и определяет, что он хочет сделать
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  example: Хочу записаться к терапевту на завтра
+
+      responses:
+        '200':
+          description: Намерение успешно определено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    enum: [make_appointment, cancel_appointment, list_appointments, unknown]
+                    example: make_appointment
+                  confidence:
+                    type: number
+                    format: float
+                    example: 0.94
+                  entities:
+                    type: object
+                    description: Извлечённые сущности из текста
+                    properties:
+                      doctorName:
+                        type: string
+                        example: Иванов Иван Иванович
+                      specialization:
+                        type: string
+                        example: Терапевт
+                      dateTime:
+                        type: string
+                        format: date-time
+                        example: '2026-10-20T10:00:00Z'
+
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INVALID_TEXT
+                  message:
+                    type: string
+                    example: Текст не может быть пустым
+
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: INTERNAL_ERROR
+                  message:
+                    type: string
+                    example: Внутренняя ошибка сервиса
+
+  /appointments/{id}:
+    post:
+      summary: Запись к врачу
+      description: Создаёт новую запись к врачу для пользователя с указанным id
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+          example: 1
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequest'
+
+      responses:
+        '201':
+          description: Запись к врачу успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INVALID_REQUEST
+                message: Поле doctorName обязательно
+
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: USER_NOT_FOUND
+                message: Пользователь с указанным id не найден
+
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервиса
+    delete:
+      summary: Удалить запись к врачу
+      description: Удаляет запись к врачу с указанным id
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор записи
+          schema:
+            type: integer
+          example: 1
+
+      responses:
+        '204':
+          description: Запись к врачу успешно удалена
+
+        '404':
+          description: Запись не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: APPOINTMENT_NOT_FOUND
+                message: Запись с указанным id не найдена
+
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервиса
+    get:
+      summary: Список всех записей к врачу
+      description: Находит все записи к врачу для пользователя с указанным id
+
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+          example: 1
+
+      responses:
+        '200':
+          description: Список записей к врачу успешно найден
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse'
+
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: USER_NOT_FOUND
+                message: Пользователь с указанным id не найден
+
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_ERROR
+                message: Внутренняя ошибка сервиса
+  
+    
+
+components:
+  schemas:
+
+    AppointmentRequest:
+      type: object
+      required:
+        - doctorName
+        - dateTime
+      properties:
+        doctorName:
+          type: string
+          example: Иванов Иван Иванович
+        dateTime:
+          type: string
+          format: date-time
+          example: '2026-10-19T10:30:00Z'
+        clinicAddress:
+          type: string
+          example: г. Новосибирск, ул. Ленина, д. 10
+
+    AppointmentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        doctorName:
+          type: string
+          example: Иванов Иван Иванович
+        specialization:
+          type: string
+          example: Терапевт
+        dateTime:
+          type: string
+          format: date-time
+          example: '2026-10-19T10:30:00Z'
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled]
+          example: scheduled
+        clinicAddress:
+          type: string
+          example: г. Новосибирск, ул. Ленина, д. 10
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: Поле doctorName обязательно

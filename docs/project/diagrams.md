@@ -36,6 +36,7 @@ classDiagram
         +int id_user
         +int id_doctor
         +datetime time
+        +string status
         +int id_hospital
     }
 
